@@ -160,30 +160,19 @@ export const updateGroupStandings = (players, matches) => {
   return standings;
 };
 
-// Generate knockout bracket
+// Generate adaptive knockout bracket
 export const generateKnockoutBracket = (qualifiedPlayers) => {
   const playerNames = qualifiedPlayers.map((p) => p.name);
   const numPlayers = playerNames.length;
 
-  // Determine bracket size (must be power of 2)
-  let bracketSize = 4;
-  while (bracketSize < numPlayers) {
-    bracketSize *= 2;
-  }
-
   // Shuffle players
   const shuffled = [...playerNames].sort(() => Math.random() - 0.5);
 
-  // Pad with nulls if needed
-  while (shuffled.length < bracketSize) {
-    shuffled.push(null);
-  }
-
-  // Create rounds
+  // Create rounds based on number of qualified players
   const rounds = [];
   let currentRound = [];
 
-  // First round
+  // First round - pair all qualified players
   for (let i = 0; i < shuffled.length; i += 2) {
     currentRound.push({
       player1: shuffled[i],
@@ -195,7 +184,7 @@ export const generateKnockoutBracket = (qualifiedPlayers) => {
   }
   rounds.push(currentRound);
 
-  // Create subsequent rounds
+  // Create subsequent rounds until we reach the final
   let matchesInNextRound = currentRound.length / 2;
   while (matchesInNextRound >= 1) {
     const nextRound = [];
