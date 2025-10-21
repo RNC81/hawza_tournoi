@@ -82,39 +82,59 @@ const GroupStage = ({ players, groups, setGroups, onComplete }) => {
   };
 
   const handleCompleteGroups = () => {
-    // Determine qualified players based on number of groups
-    const qualified = [];
-    const groupCount = groups.length;
+    // New intelligent qualification logic
+    const totalPlayers = players.length;
+    let targetQualified;
 
-    if (groupCount === 1) {
-      // If only 1 group, take all players (or top players if too many)
-      qualified.push(...groups[0].standings.slice(0, Math.min(8, groups[0].standings.length)));
-    } else if (groupCount === 2) {
-      // 2 groups: top 4 from each
-      groups.forEach((group) => {
-        qualified.push(...group.standings.slice(0, 4));
-      });
-    } else if (groupCount === 3) {
-      // 3 groups: top 2 from each + best 2 third-placed
-      groups.forEach((group) => {
-        qualified.push(...group.standings.slice(0, 2));
-      });
-      
-      const thirdPlaced = groups.map((group) => group.standings[2]).filter(Boolean);
+    // Determine target number of qualified players
+    if (totalPlayers <= 8) {
+      targetQualified = 4;
+    } else if (totalPlayers <= 16) {
+      targetQualified = 8;
+    } else {
+      targetQualified = 16;
+    }
+
+    const qualified = [];
+    const thirdPlaced = [];
+
+    // Step 1: Take top 2 from each group
+    groups.forEach((group) => {
+      qualified.push(...group.standings.slice(0, 2));
+      // Collect third-placed players if they exist
+      if (group.standings[2]) {
+        thirdPlaced.push(group.standings[2]);
+      }
+    });
+
+    // Step 2: If we need more players, add best third-placed
+    if (qualified.length < targetQualified && thirdPlaced.length > 0) {
+      // Sort third-placed players by ranking criteria
       thirdPlaced.sort((a, b) => {
         if (b.points !== a.points) return b.points - a.points;
         if (b.diff !== a.diff) return b.diff - a.diff;
         return b.goalsFor - a.goalsFor;
       });
-      qualified.push(...thirdPlaced.slice(0, 2));
-    } else {
-      // 4+ groups: top 2 from each
+
+      const needed = targetQualified - qualified.length;
+      qualified.push(...thirdPlaced.slice(0, needed));
+    }
+
+    // If still not enough (edge case), take more players from groups
+    if (qualified.length < targetQualified) {
       groups.forEach((group) => {
-        qualified.push(...group.standings.slice(0, 2));
+        for (let i = 3; i < group.standings.length && qualified.length < targetQualified; i++) {
+          if (!qualified.find(p => p.name === group.standings[i].name)) {
+            qualified.push(group.standings[i]);
+          }
+        }
       });
     }
 
-    onComplete(qualified);
+    // Limit to target number
+    const finalQualified = qualified.slice(0, targetQualified);
+
+    onComplete(finalQualified);
   };
 
   return (
