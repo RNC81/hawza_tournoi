@@ -6,8 +6,16 @@
 
 .App {
   min-height: 100vh;
-  background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+  position: relative;
   color: #e5e7eb;
+  /* Background image with dark overlay */
+  background-image: 
+    linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.85)),
+    url('https://images.unsplash.com/photo-1574561937874-23dd3e64dc89?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1Nzh8MHwxfHNlYXJjaHwyfHxmb290YmFsbCUyMHN0YWRpdW0lMjBhZXJpYWwlMjB2aWV3JTIwbmlnaHR8ZW58MHx8fHwxNzYxMTE5MDQ0fDA&ixlib=rb-4.1.0&q=85');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
 }
 
 /* Tournament Header */
