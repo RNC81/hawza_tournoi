@@ -18,10 +18,17 @@ const KnockoutStage = ({ knockoutMatches, setKnockoutMatches, onFinish }) => {
   const [score2, setScore2] = useState("");
 
   const handleMatchClick = (roundIndex, matchIndex, match) => {
-    if (match.player1 && match.player2 && !match.winner) {
+    // Allow editing both unplayed and played matches
+    if (match.player1 && match.player2) {
       setSelectedMatch({ roundIndex, matchIndex, match });
-      setScore1("");
-      setScore2("");
+      // Pre-fill scores if match was already played
+      if (match.winner) {
+        setScore1(match.score1.toString());
+        setScore2(match.score2.toString());
+      } else {
+        setScore1("");
+        setScore2("");
+      }
     }
   };
 
@@ -34,22 +41,43 @@ const KnockoutStage = ({ knockoutMatches, setKnockoutMatches, onFinish }) => {
     const { roundIndex, matchIndex, match } = selectedMatch;
     const newMatches = JSON.parse(JSON.stringify(knockoutMatches));
     
-    const winner = s1 > s2 ? match.player1 : match.player2;
+    const newWinner = s1 > s2 ? match.player1 : match.player2;
+    const oldWinner = match.winner;
+    
     newMatches[roundIndex][matchIndex].score1 = s1;
     newMatches[roundIndex][matchIndex].score2 = s2;
-    newMatches[roundIndex][matchIndex].winner = winner;
+    newMatches[roundIndex][matchIndex].winner = newWinner;
+
+    // If winner changed, we need to clear subsequent matches
+    if (oldWinner && oldWinner !== newWinner) {
+      // Clear all matches after this one in the bracket
+      for (let r = roundIndex + 1; r < newMatches.length; r++) {
+        for (let m = 0; m < newMatches[r].length; m++) {
+          const currentMatch = newMatches[r][m];
+          // Check if this match involved the old winner
+          if (currentMatch.player1 === oldWinner || currentMatch.player2 === oldWinner) {
+            // Clear this match and all subsequent
+            currentMatch.player1 = r === roundIndex + 1 && m === Math.floor(matchIndex / 2) ? (matchIndex % 2 === 0 ? newWinner : currentMatch.player1) : null;
+            currentMatch.player2 = r === roundIndex + 1 && m === Math.floor(matchIndex / 2) ? (matchIndex % 2 === 1 ? newWinner : currentMatch.player2) : null;
+            currentMatch.score1 = undefined;
+            currentMatch.score2 = undefined;
+            currentMatch.winner = null;
+          }
+        }
+      }
+    }
 
     // Advance winner to next round
     if (roundIndex < newMatches.length - 1) {
       const nextRoundMatchIndex = Math.floor(matchIndex / 2);
       if (matchIndex % 2 === 0) {
-        newMatches[roundIndex + 1][nextRoundMatchIndex].player1 = winner;
+        newMatches[roundIndex + 1][nextRoundMatchIndex].player1 = newWinner;
       } else {
-        newMatches[roundIndex + 1][nextRoundMatchIndex].player2 = winner;
+        newMatches[roundIndex + 1][nextRoundMatchIndex].player2 = newWinner;
       }
     } else {
       // This was the final
-      onFinish(winner);
+      onFinish(newWinner);
     }
 
     setKnockoutMatches(newMatches);
@@ -81,7 +109,7 @@ const KnockoutStage = ({ knockoutMatches, setKnockoutMatches, onFinish }) => {
                 <Card
                   key={matchIndex}
                   className={`bracket-match ${
-                    match.player1 && match.player2 && !match.winner ? 'clickable' : ''
+                    match.player1 && match.player2 ? 'clickable' : ''
                   } ${match.winner ? 'completed' : ''}`}
                   onClick={() => handleMatchClick(roundIndex, matchIndex, match)}
                 >
