@@ -40,8 +40,13 @@ const GroupStage = ({ players, groups, setGroups, onComplete }) => {
   };
 
   const handleMatchClick = (groupIndex, match) => {
-    if (!match.played) {
-      setSelectedMatch({ groupIndex, match });
+    // Allow editing both unplayed and played matches
+    setSelectedMatch({ groupIndex, match });
+    // Pre-fill scores if match was already played
+    if (match.played) {
+      setScore1(match.score1.toString());
+      setScore2(match.score2.toString());
+    } else {
       setScore1("");
       setScore2("");
     }
@@ -197,7 +202,7 @@ const GroupStage = ({ players, groups, setGroups, onComplete }) => {
                       {group.matches.map((match, matchIndex) => (
                         <div
                           key={matchIndex}
-                          className={`match-item ${match.played ? 'played' : 'unplayed'}`}
+                          className={`match-item ${match.played ? 'played' : 'unplayed'} clickable`}
                           onClick={() => handleMatchClick(groupIndex, match)}
                         >
                           <span>{match.player1}</span>
